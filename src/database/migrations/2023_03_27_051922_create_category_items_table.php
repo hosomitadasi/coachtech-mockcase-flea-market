@@ -6,11 +6,7 @@ use Illuminate\Support\Facades\Schema;
 
 class CreateCategoryItemsTable extends Migration
 {
-    /**
-     * Run the migrations.
-     *
-     * @return void
-     */
+
     public function up()
     {
         Schema::create('category_items', function (Blueprint $table) {
@@ -21,11 +17,6 @@ class CreateCategoryItemsTable extends Migration
         });
     }
 
-    /**
-     * Reverse the migrations.
-     *
-     * @return void
-     */
     public function down()
     {
         Schema::table('category_items', function (Blueprint $table) {

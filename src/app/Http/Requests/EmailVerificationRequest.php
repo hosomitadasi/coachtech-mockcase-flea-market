@@ -15,11 +15,7 @@ class EmailVerificationRequest extends FormRequest
         $this->unauthenticated_user = session()->get('unauthenticated_user');
         $this->guard = $guard;
     }
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
+
     public function authorize()
     {
         if (! hash_equals(
@@ -39,11 +35,6 @@ class EmailVerificationRequest extends FormRequest
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
         return [
@@ -51,11 +42,6 @@ class EmailVerificationRequest extends FormRequest
         ];
     }
 
-    /**
-     * Fulfill the email verification request.
-     *
-     * @return void
-     */
     public function fulfill()
     {
         if (! $this->unauthenticated_user->hasVerifiedEmail()) {
@@ -65,12 +51,6 @@ class EmailVerificationRequest extends FormRequest
         }
     }
 
-    /**
-     * Configure the validator instance.
-     *
-     * @param  \Illuminate\Validation\Validator  $validator
-     * @return void
-     */
     public function withValidator($validator)
     {
         return $validator;

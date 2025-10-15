@@ -8,21 +8,12 @@ use Laravel\Fortify\Http\Requests\LoginRequest as FortifyLoginRequest;
 //そのため、デフォルトにある上述のFortifyLoginRequestクラスを継承する必要がある
 class LoginRequest extends FortifyLoginRequest
 {
-    /**
-     * Determine if the user is authorized to make this request.
-     *
-     * @return bool
-     */
+
     public function authorize()
     {
         return true;
     }
 
-    /**
-     * Get the validation rules that apply to the request.
-     *
-     * @return array
-     */
     public function rules()
     {
         return [
