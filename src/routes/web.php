@@ -10,6 +10,7 @@ use App\Http\Requests\EmailVerificationRequest;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use Laravel\Fortify\Http\Controllers\AuthenticatedSessionController;
+// 各種controller読み込み、Routeファザードを使ってルーティング定義を実施。「どのURLで、どのcontrollerの、どのメソッドを実行するか」を記述。
 
 Route::get('/',[ItemController::class, 'index'])->name('items.list');
 // URL:/ コントローラ:ItemController@index
