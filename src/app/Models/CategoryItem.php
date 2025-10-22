@@ -31,4 +31,5 @@ class CategoryItem extends Model
     {
         return $this->belongsTo('App\Models\Item');
     }
+    // 上記二つとの中間関係になることにより、「1つの商品が複数のカテゴリに属し、1つのカテゴリに複数の商品が存在する」という多対多（Many-to-Many）の関係が成立。
 }
