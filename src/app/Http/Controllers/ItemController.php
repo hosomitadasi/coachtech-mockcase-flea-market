@@ -3,30 +3,28 @@
 namespace App\Http\Controllers;
 
 use Storage;
-// laravelのファザードStorageを使ってファイル操作（ファイル保存）を実施する。
+// 画像などをストレージに保存するためのファザード
 use Illuminate\Http\Request;
-// HTTPリクエスト（GET/POST）の内容を受け取るためのクラス。
+// フォームやURLパラメータから送られたデータを扱うクラス
 use Illuminate\Support\Facades\Auth;
-// 認証情報を取得するために使用。
+// ログイン中のユーザー情報を取得するための認証クラス
 use App\Http\Requests\ItemRequest;
-// 出品フォームのバリデーションを行うカスタムリクエストクラス(rules()が定義されている想定)。
 use App\Models\Item;
 use App\Models\Category;
 use App\Models\Condition;
 use App\Models\CategoryItem;
-// 各モデルを扱う。
 
 class ItemController extends Controller
 {
     public function index(Request $request){
         $tab = $request->query('tab', 'recommend');
-        // クエリパラメータ?tab=…を取得。無ければ'recommend'をデフォルトにする
+        // URLパラメータ（例：?tab=mylist）を取得。もし何も取得されていなければ、'recommend'をデフォルト値として使用。
         $search = $request->query('search');
-        // 検索バーに検索事項があるなら検索語(?search=×××)を取得。未指定ならnullで表記。
+        // 検索ワードを取得（例：?search=時計）
         $query = Item::query();
-        // Eloquent のクエリビルダを開始（まだSQLは発行されていない）。
+        // Itemモデルに対してクエリビルダーを作成。次のコードで条件を追加して検索を実施。
         $query->where('user_id', '<>', Auth::id());
-        // まず自分が出品した商品は一覧から除外する（<> は「等しくない」）。Auth::id() が null
+        // まず自分が出品した商品は一覧から除外する（<> は「等しくない」）。
         if ($tab === 'mylist'){
             $query->whereIn('id', function ($query) {
                 $query->select('item_id')
@@ -51,29 +49,39 @@ class ItemController extends Controller
     public function detail(Item $item){
         return view('detail', compact('item'));
     }
+    // 引数の$itemはルートモデルバインディングにより自動的に取得される。return view('detail', compact('item'))にて商品詳細ページdetail.blade.phpに$itemを渡して表示。
+    // 例：/item/5にアクセス -> $itemはid=5のレコードになる。
 
     public function search(Request $request){
         $search_word = $request->search_item;
+        // フォーム入力から検索キーワードを取得。
         $query = Item::query();
+        // 新しいクエリビルダーを作成。
         $query = Item::scopeItem($query, $search_word);
-
+        // Itemモデルに定義されたスコープ関数を呼び出し、商品名に部分一致する検索条件を追加。
         $items = $query->get();
+        // 条件に合う商品を取得。
         return view('index', compact('items'));
+        // 検索結果を一覧ページに表示。
     }
 
     public function sellView(){
         $categories = Category::all();
+        // カテゴリー一覧を取得。
         $conditions = Condition::all();
+        // 商品の状態を取得。
         return view('sell',compact('categories', 'conditions'));
+        // 出品フォーム画面にデータを渡して表示。
     }
 
     public function sellCreate(ItemRequest $request){
 
         $img = $request->file('img_url');
+        // フォームでアップロードされた商品画像を取得。
 
         try {
-            //code...
             $img_url = Storage::disk('local')->put('public/img', $img);
+            // 画像をstorage/app/public/img/ に保存。戻り値は保存されたファイルパス。
         } catch (\Throwable $th) {
             throw $th;
         }
@@ -87,6 +95,7 @@ class ItemController extends Controller
             'condition_id' => $request->condition_id,
             'user_id' => Auth::id(),
         ]);
+        // 送信されたフォームデータを使い、itemsテーブルに新しい商品を登録。
 
         foreach ($request->categories as $category_id){
             CategoryItem::create([
@@ -94,7 +103,9 @@ class ItemController extends Controller
                 'category_id' => $category_id
             ]);
         }
+        // 選択されたカテゴリ（複数可）を繰り返し処理し、中間テーブルcategory_itemsに登録。
 
         return redirect()->route('item.detail',['item' => $item->id]);
+        // 出品が完了したら、その商品の詳細ページへリダイレクト。
     }
 }
