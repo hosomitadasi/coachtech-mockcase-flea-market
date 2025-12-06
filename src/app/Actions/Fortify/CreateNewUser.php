@@ -44,11 +44,15 @@ class CreateNewUser implements CreatesNewUsers
             'password.confirmed' => 'パスワードと一致しません'
         ];
         Validator::make($input, $rules, $messages)->validate();
+        // バリデーションを行うためのインスタンスを作成。$inputはユーザーが入力したデータ、$rulesは上記$rulesの各項目のルール、$messagesはルール違反した場合のエラーメッセージを格納。
+        // 「$inputのデータを、$rulesの規則に従って検証し、エラーがあれば**$messagesの文言**を返すバリデーターを作成せよ」という指示となる。
+        // ->validate() メソッドで、実際に検証が実行。エラーがあれば自動的にリダイレクトされエラーメッセージが表示される。
 
         return User::create([
             'name' => $input['name'],
             'email' => $input['email'],
             'password' => Hash::make($input['password']),
         ]);
+        // バリデーション成功後、$inputに記載された情報をusersテーブルそれぞれに新しいレコードを作成し、Userモデルのインスタンスを返す。
     }
 }

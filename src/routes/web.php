@@ -91,21 +91,35 @@ Route::post('/register', [RegisteredUserController::class, 'store']);
 Route::get('/email/verify', function () {
     return view('auth.verify-email');
 })->name('verification.notice');
-// URL: コントローラ:
-// メール認証がまだ済んでいないユーザーに「認証メールを確認してください」画面を表示。
+// 認証督促画面の表示：ユーザーがログインを試みたものの、まだメール認証が完了していない場合にリダイレクトされてくる画面。
+// Route::get：GETリクエストの受付。ブラウザがこのURLにアクセスした時に処理を実行。
+// /email/verify：ルーティングされるパス。通常、ログイン後のミドルウエアチェックに失敗したユーザーがリダイレクトされる。
+// function () { return view('auth.verify-email'); }：ビューの返却。auth.verify-email.blade.phpをユーザーに表示。
+// ->name('verification.notice')：ルートの識別。「verification.notice」という名前を付ける。RegisteredUserControllerからのリダイレクトや、フレームワーク内部での処理はこの名前を参照してURLを生成。
 
 Route::post('/email/verification-notification', function (Request $request) {
     session()->get('unauthenticated_user')->sendEmailVerificationNotification();
     session()->put('resent', true);
     return back()->with('message', 'Verification link sent!');
 })->name('verification.send');
-// URL: コントローラ:
-// 再度メール認証リンクを送信する。（「メールが届かない場合はこちら」などのボタンで使用）
+// 認証メール再送の処理：ユーザーが認証督促画面で「メールを再送する」ボタンをクリックしたときに実行されるルート。
+// Route::post：POSTリクエストの受付。フォームからのデータ送信（再送ボタンのクリック）を受け付け。
+// /email/verification-notification：ルーティングされるパス。再送処理専用のパス。
+// session()->get('unauthenticated_user')->sendEmailVerificationNotification()：認証メールの再送。セッションに一時保存されている未認証ユーザーのインスタンスを取得し、Userモデル（MustVerifyEmail実装）が持つメソッドを呼び出して、認証リンクを再度メールで送信する。
+// session()->put('resent', true)：再送フラグのセット。再送が成功したことを示すフラグをセッションに設定。これにより、元の画面（auth.verify-email.blade.php）に戻ったときに「新規認証メールを再送信しました！」というメッセージが表示される。
+// return back()->with('message', ...)：元の画面へ戻る。ユーザーを直前の画面（/email/verify）に戻す。with('message', ...)は、一時的なセッションデータ（フラッシュデータ）を付けてリダイレクトするためのもの。
+// ->name('verification.send')：ルートの識別名。認証督促画面のフォームが、この名前を使ってPOSTの送信先URLを指定。
 
 Route::get('/email/verify/{id}/{hash}', function (EmailVerificationRequest $request) {
     $request->fulfill();
     session()->forget('unauthenticated_user');
     return redirect('/mypage/profile');
 })->name('verification.verify');
-// URL: コントローラ:
-// メールのリンクをクリックした際に呼ばれる。認証を完了させ、マイページへリダイレクト。
+// 認証リンクの検証と完了：このルートは、ユーザーがメール内の認証リンクをクリックしたときにアクセスされる最終的な処理。
+// Route::get：GETリクエストの受付。認証リンクのクリックによるアクセスを受付。
+// /email/verify/{id}/{hash}：動的パラメータを含むパス。id（ユーザーID）と hash（メールアドレスの署名）という2つの必須パラメータを含むパス。これらは認証リンクのセキュリティを担保するために使われる。
+// (EmailVerificationRequest $request)：検証と認証処理の委譲。ここでは、Laravelのフォームリクエストが使われている。のクラス（EmailVerificationRequest.php）は、**アクセス許可の検証（idとhashが正しいか）を自動で実行。検証が失敗すると、処理はここでストップし、エラーが返される。
+// $request->fulfill()：認証の完了とログイン。EmailVerificationRequest内のfulfill()メソッドを実行。このメソッドの中で、データベースのemail_verified_atカラムに現在時刻が書き込まれ、ユーザーがログイン状態**になる。
+// session()->forget('unauthenticated_user')：一時データの削除。認証が完了したため、セッションに保存していた一時的な未認証ユーザーデータを削除する。
+// return redirect('/mypage/profile')：認証完了後の遷移。認証が成功した後、ユーザーをアプリケーション内の指定されたページ（この例では/mypage/profile）に誘導する。
+// ->name('verification.verify')：ルートの識別名。メール認証リンクの本文に埋め込まれるURLとして使用される。
